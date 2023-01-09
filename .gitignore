@@ -1,2 +1,6 @@
 screenshots/
 sequence/
+custom_object_detection/objdetenv/
+custom_object_detection/PennFudanPed/
+custom_object_detection/PennFudanPed.zip
+coursera_pytorch_object_localization/
