@@ -40,7 +40,7 @@ for (hwnd, win_text) in windows_list:
         break
         
 position = win32gui.GetWindowRect(game_hwnd)
-pid = PID(40, 1.2, 0.2, setpoint=93)
+pid = PID(5, 1, 0.01, setpoint=93)
 setpoint = 93
 use_pid = True
 while True:
@@ -48,13 +48,16 @@ while True:
     screenshot = np.array(screenshot)
     screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
     #screenshot = cv2.resize(screenshot,(960,540))
-    diff_line,image = calculate_difference_line(screenshot,True,nbins=256)
+    diff_line,image,regerror,linear_slope = calculate_difference_line(screenshot,True,nbins=256)
     print(diff_line)
     if use_pid:
         if diff_line != 0:
             pid_out = pid(diff_line)
-            new_gamepad_x = limit(pid_out/screenshot.shape[1])
-            print("new_gamepad_x",new_gamepad_x)
+            slope_adjustment = (1-linear_slope/-11)
+            
+            new_gamepad_x = limit((0.5*pid_out/screenshot.shape[1])+slope_adjustment)
+            print("diff_line: %s \t pid: %s \t slope: %s \t combined: \t %s" % (diff_line, pid_out/screenshot.shape[1],slope_adjustment,new_gamepad_x))
+            #print("new_gamepad_x",new_gamepad_x)
         else:
             new_gamepad_x = 0
     else:

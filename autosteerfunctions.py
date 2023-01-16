@@ -37,6 +37,9 @@ def calculate_difference_line(img,show=False,nbins=128,displayCalculations=False
         
         
         return (middle_x and middle_y and left_and_right_edge),image
+    def computePolyLoss(y,y_pred,degree,param):
+        loss = np.sum(np.sqrt((y - y_pred)**2) + param*degree**2)
+        return loss
     org_img = img
     image = np.copy(img)
     image = color.rgb2gray(image)
@@ -64,7 +67,7 @@ def calculate_difference_line(img,show=False,nbins=128,displayCalculations=False
                 (x,y) = (c[0][0][0],c[0][0][1])
                 cond,image = not_in__middle(x,y,70,image,draw=True)
                 if x > 500 and x < 1500 and cond:
-                    cv2.circle(image, (x,y),10,(0,0,0))
+                    #cv2.circle(image, (x,y),10,(0,0,0))
                     for element in c:
                         x_arr.append([x])
                         y_arr.append([y])
@@ -78,8 +81,12 @@ def calculate_difference_line(img,show=False,nbins=128,displayCalculations=False
             #linear regression with sklearn
             #model = LinearRegression()
             #pred = model.fit(x_arr,y_arr)
-            x_1d = np.arange(600,1100) #hier muss theoertisch nur in der Mitte des Bildes die Xwerte angeschaut werden
-            x = x_1d.reshape((-1, 1))
+            use_xarr_from_detection = True
+            if use_xarr_from_detection:
+                x = x_arr
+            else:
+                x_1d = np.arange(600,1100) #hier muss theoertisch nur in der Mitte des Bildes die Xwerte angeschaut werden
+                x = x_1d.reshape((-1, 1))
             if displayCalculations:
                 print("X Werte neu Shape: ",x.shape)
             #y_pred = model.predict(x)
@@ -87,26 +94,37 @@ def calculate_difference_line(img,show=False,nbins=128,displayCalculations=False
 
 
             #linear regression with numpy
-            x_np = x_arr.reshape((1, -11))[0]
-            (m, b) = np.polyfit(x_np, y_arr, 1)
-            #print(m,b)
+            x_np = x_arr.reshape((1, -1))[0]
+            degree = 1
+            coeffs = np.polyfit(x_np, y_arr, degree)
+            polymodel = np.poly1d(coeffs)
+            one_dim_regression = True
+            if one_dim_regression:
+                #numpy linear reg; degree 1
+                m, b = coeffs
+                if (m < 0.5 and m > -0.5): #ignore these slopes
+                    return 0, image, 0, 0
+                yp = np.polyval([m, b], x_np)
+                #print(yp)
+            else:
+                yp = polymodel(x_np)
             
-            if (m < 0.5 and m > -0.5):
-                return 0, image
-            yp = np.polyval([m, b], x_1d)
-            #print(yp)
-
+            #print("y fitting: ",y_arr.reshape(-1,1).shape)
+            #print("y neu: ",yp.shape)
+            #print("degree: ",degree)
+            regression_error = computePolyLoss(y_arr.reshape(-1,1),yp,degree,1)
+            #print("regression error (loss): ",regression_error)
 
             #y_pred = model.coef_[0]*x + model.coef_[1]*xfit**2 + model.intercept_
             #y_pred = model.coef_[0]*x + model.intercept_
-            for idx,x_element in enumerate(x):
+            for idx,x_element in enumerate(x_np):
                 if show:
                     if idx < 10 and displayCalculations:
-                        print(x[idx],yp[idx])
+                        print(x_np[idx],yp[idx])
                     #sklearn regression
                     #cv2.circle(image, (int(x[idx]),int(y_pred[idx])),10,(255,0,0))
                     #numpy regression
-                    cv2.circle(image, (int(x[idx]),int(yp[idx])),10,(0,255,0))
+                    cv2.circle(image, (int(x_np[idx]),int(yp[idx])),10,(0,0,0))
             if show:
                 x1 = x[0][0]
                 y1 = int(yp[0])
@@ -116,12 +134,12 @@ def calculate_difference_line(img,show=False,nbins=128,displayCalculations=False
 
 
             #draw middle line at center
-            
-            middle_screen_y = image.shape[0]//2
-            middle_screen_x = (middle_screen_y - b)/m
-            #middle_screen_x = (middle_screen_y - model.intercept_)/model.coef_[0]
-            #middle_point = (int(middle_screen_x),int(middle_screen_y))
-            diff_line = image.shape[1]//2 - middle_screen_x
+            if one_dim_regression:
+                middle_screen_y = image.shape[0]//2
+                middle_screen_x = (middle_screen_y - b)/m
+                #middle_screen_x = (middle_screen_y - model.intercept_)/model.coef_[0]
+                #middle_point = (int(middle_screen_x),int(middle_screen_y))
+                diff_line = image.shape[1]//2 - middle_screen_x
 
             if displayCalculations:
                 print("image shape: ", image.shape)
@@ -137,6 +155,6 @@ def calculate_difference_line(img,show=False,nbins=128,displayCalculations=False
             image = None
             
     if diff_line == None:
-        return 0,image
+        return 0,image,0,0
     else:
-        return diff_line,image
+        return diff_line,image,regression_error,m
