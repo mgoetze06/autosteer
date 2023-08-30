@@ -8,6 +8,9 @@ from PIL import ImageGrab
 import time
 import matplotlib.pyplot as plt 
 import vgamepad as vg
+from win32api import GetKeyState
+import win32api
+import time
 
 time.sleep(3)
 gamepad = vg.VX360Gamepad()
@@ -45,25 +48,39 @@ pid = PID(1, 0.1, 0.01, setpoint=0)
 #pid = PID(5, 1, 0.01, setpoint=93)
 #setpoint = 93
 #use_pid = True
+gamepad_x = 0
+freigabe = False
 while True:
+    if win32api.GetAsyncKeyState(13):
+        print("enter pressed")
+        freigabe = not freigabe
+        gamepad.left_joystick_float(x_value_float=0, y_value_float=0)
+        gamepad.update()
+    time.sleep(0.1)
     screenshot = ImageGrab.grab(position)
     screenshot = np.array(screenshot)
     screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
     #screenshot = cv2.resize(screenshot,(960,540))    
-    roi = rectangle_roi_center(screenshot,0.06666,0.06666,-150,0)
+    roi = rectangle_roi_center(screenshot,0.06666,0.08666,-150,0)
     schwad_fehler,roi = get_schwad_distance_from_center(roi,50,False)
-    print("schwadfehler: ",schwad_fehler)
-    pid_out = pid(schwad_fehler)
-    print("PID_Out: ",pid_out)
-    new_gamepad_x = round(pid_out/200,2)
-    print("newgamepadx: ",new_gamepad_x)
-    #gamepad.left_joystick_float(x_value_float=new_gamepad_x, y_value_float=0)
-    
-    
-    #plt.show(block=False)
-    gamepad.left_joystick_float(x_value_float=new_gamepad_x, y_value_float=0)
-    gamepad.update()
-    #screenshot = cv2.resize(roi,(960,540))
+    if freigabe:
+        print("schwadfehler: ",schwad_fehler)
+        pid_out = pid(schwad_fehler)
+        print("PID_Out: ",pid_out)
+        new_gamepad_x = limit(round(pid_out/300,2))
+
+        if abs(new_gamepad_x - gamepad_x)>1:
+            print("Fehler aufgetreten")
+            gamepad.left_joystick_float(x_value_float=0, y_value_float=0)
+            gamepad.update()
+        else:
+
+            print("newgamepadx: ",new_gamepad_x)
+
+            gamepad.left_joystick_float(x_value_float=new_gamepad_x, y_value_float=0)
+            gamepad.update()
+        gamepad_x = new_gamepad_x
+        #screenshot = cv2.resize(roi,(960,540))
     window_name = "Screen"
     cv2.namedWindow(window_name)
     cv2.moveWindow(window_name, -1200,30)

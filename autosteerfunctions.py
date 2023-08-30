@@ -158,3 +158,71 @@ def calculate_difference_line(img,show=False,nbins=128,displayCalculations=False
         return 0,image,0,0
     else:
         return diff_line,image,regression_error,m
+
+def rectangle_roi_center(img,width_factor,height_factor,y_offset,x_offset):
+    #print(img.shape)
+    rect_height = round(width_factor * img.shape[0])
+    rect_width = round(height_factor * img.shape[1])
+    x_mid = img.shape[1]//2
+    y_mid = img.shape[0]//2
+    #print(y_mid,x_mid)
+    #print(rect_height,rect_width)
+    #y_offset = 150
+    p1 = y_mid-rect_height+y_offset
+    p2 = y_mid+rect_height+y_offset
+    p3 = x_mid-rect_width+x_offset
+    
+    p4 = x_mid+rect_width+x_offset
+    #print(p1,p2,p3,p4)
+    
+    roi = img[p1:p2,p3:p4]
+    
+    #distance_from_center = 0
+    
+    return roi
+
+def get_schwad_distance_from_center(img,line_index,show):
+    img_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    #plt.imshow(img_gray, cmap="gray")
+    img_gray_res = exposure.rescale_intensity(img_gray,in_range=(10,100),out_range='uint8')
+
+    kernel_size = 35
+    blur_gray = cv2.GaussianBlur(img_gray_res,(kernel_size, kernel_size),0)
+
+    line = blur_gray[line_index]
+    #print(line)
+    #plt.plot(line)
+
+    avg = np.convolve(line, np.ones(kernel_size)/kernel_size, mode='valid')
+    #plt.plot(avg)
+    #plt.plot(np.diff(line))
+    #print(np.argmax(np.gradient(line)))
+    #print(np.argmin(np.gradient(line)))
+
+    up = np.argmax(np.gradient(avg))
+    down = np.argmin(np.gradient(avg))
+
+    bild_mitte = len(line)//2
+
+    schwad_breite = abs(up - down)
+    schwad_mitte = min(up,down) + schwad_breite // 2
+
+
+    fehler = schwad_mitte - bild_mitte
+    #cv2.line(img, (10, line_index), (100, line_index), (0, 255, 0), thickness=2)
+    cv2.line(img, (bild_mitte, 10), (bild_mitte, 100), (255, 255, 0), thickness=2)
+    cv2.line(img, (schwad_mitte, 10), (schwad_mitte, 100), (0, 255, 0), thickness=2)
+    cv2.line(img, (up, 10), (up, 100), (0, 255, 0), thickness=1)
+    cv2.line(img, (down, 10), (down, 100), (0, 255, 0), thickness=1)
+    cv2.line(img, (up, line_index), (down, line_index), (0, 255, 0), thickness=1)
+    
+    if show:
+        #plt.plot(line)
+        plt.plot(avg)
+        plt.vlines(schwad_mitte,75,150,colors='r')
+        plt.vlines(up,75,150,colors='b')
+        plt.vlines(down,75,150,colors='b')
+        plt.vlines(len(line)//2,75,150)
+    #print(schwad_breite,schwad_mitte)
+    #print("Fehler: ",fehler)
+    return fehler,img
