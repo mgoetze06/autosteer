@@ -50,6 +50,9 @@ pid = PID(1, 0.1, 0.01, setpoint=0)
 #use_pid = True
 gamepad_x = 0
 freigabe = False
+f = open("regelung_schwad.csv", "w")
+output_text = "schwad_fehler;pid_out;gamepad_steering"
+f.write(output_text + '\n')
 while True:
     if win32api.GetAsyncKeyState(13):
         print("enter pressed")
@@ -57,6 +60,8 @@ while True:
         gamepad.left_joystick_float(x_value_float=0, y_value_float=0)
         gamepad.update()
     time.sleep(0.1)
+
+    
     screenshot = ImageGrab.grab(position)
     screenshot = np.array(screenshot)
     screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
@@ -74,9 +79,10 @@ while True:
             gamepad.left_joystick_float(x_value_float=0, y_value_float=0)
             gamepad.update()
         else:
-
+            
             print("newgamepadx: ",new_gamepad_x)
-
+            output_text = "" + str(schwad_fehler) + ";" + str(pid_out) + ";" + str(new_gamepad_x)
+            f.write(output_text + '\n')
             gamepad.left_joystick_float(x_value_float=new_gamepad_x, y_value_float=0)
             gamepad.update()
         gamepad_x = new_gamepad_x
@@ -87,6 +93,7 @@ while True:
     cv2.imshow(window_name, roi)
     cv2.waitKey(1)
 cv2.destroyAllWindows()
+f.close()
     
 
 

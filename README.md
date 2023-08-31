@@ -26,3 +26,28 @@ The difference is then used as the input of a simple PID controller which then o
 > import vgamepad as vg <br/>
 > https://pypi.org/project/vgamepad/ <br/>
 
+
+# Autosteer swath detection
+Automatically follow a swath by steering a vehicle in farming simulator.
+
+<img src="https://github.com/mgoetze06/autosteer/blob/main/schwaderkennung/schwaderkennung.png?raw=true" width="100%">
+
+## Get swath position
+Rectangle ROI in center of screenshot, height offset to match the vehicle engine hood.
+Use maximum and minimum gradient on grayscale image to detect swath after blurring the image.
+>blur_gray = cv2.GaussianBlur(img_gray_res,(kernel_size, kernel_size),0)
+>up = np.argmax(np.gradient(avg))
+>down = np.argmin(np.gradient(avg))
+
+<img src="https://github.com/mgoetze06/autosteer/blob/main/schwaderkennung/schwad_lines.png?raw=true" width="100%">
+
+Calculate distance of swath to the center of the image.
+
+<img src="https://github.com/mgoetze06/autosteer/blob/main/schwaderkennung/schwad.png?raw=true" width="100%">
+
+## PID Control
+
+Use PID controller to control the distance between swath and center of image to zero.
+
+<img src="https://github.com/mgoetze06/autosteer/blob/main/schwaderkennung/schwad_regelung.png?raw=true" width="100%">
+

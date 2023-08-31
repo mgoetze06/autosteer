@@ -223,6 +223,7 @@ def get_schwad_distance_from_center(img,line_index,show):
         plt.vlines(up,75,150,colors='b')
         plt.vlines(down,75,150,colors='b')
         plt.vlines(len(line)//2,75,150)
+        plt.savefig('temp.png', dpi=150)
     #print(schwad_breite,schwad_mitte)
     #print("Fehler: ",fehler)
     return fehler,img
