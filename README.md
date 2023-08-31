@@ -25,8 +25,8 @@ The difference is then used as the input of a simple PID controller which then o
 > https://pypi.org/project/simple-pid/ <br/>
 > import vgamepad as vg <br/>
 > https://pypi.org/project/vgamepad/ <br/>
-
-
+<br/>
+<br/>
 # Autosteer swath detection
 Automatically follow a swath by steering a vehicle in farming simulator.
 
@@ -35,10 +35,10 @@ Automatically follow a swath by steering a vehicle in farming simulator.
 ## Get swath position
 Rectangle ROI in center of screenshot, height offset to match the vehicle engine hood.
 Use maximum and minimum gradient on grayscale image to detect swath after blurring the image.
->blur_gray = cv2.GaussianBlur(img_gray_res,(kernel_size, kernel_size),0)
->up = np.argmax(np.gradient(avg))
->down = np.argmin(np.gradient(avg))
-
+>blur_gray = cv2.GaussianBlur(img_gray_res,(kernel_size, kernel_size),0)<br/>
+>up = np.argmax(np.gradient(avg))<br/>
+>down = np.argmin(np.gradient(avg))<br/>
+The following graph shows the intensity change of the pixels in a given line. Light blue line is the image center. Red line is the swath center calculated from both blue lines.
 <img src="https://github.com/mgoetze06/autosteer/blob/main/schwaderkennung/schwad_lines.png?raw=true" width="100%">
 
 Calculate distance of swath to the center of the image.
@@ -47,7 +47,7 @@ Calculate distance of swath to the center of the image.
 
 ## PID Control
 
-Use PID controller to control the distance between swath and center of image to zero.
+Use PID controller to control the distance between swath and center of image to zero. 
 
-<img src="https://github.com/mgoetze06/autosteer/blob/main/schwaderkennung/schwad_regelung.png?raw=true" width="100%">
+<img src="https://github.com/mgoetze06/autosteer/blob/main/schwaderkennung/schwadregelung.png?raw=true" width="100%">
 
